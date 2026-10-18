@@ -23,10 +23,11 @@ jobs:
     - name: Build Web Project
       run: bun run build
 
-    # এখানে --legacy-peer-deps যোগ করে অমিল থাকা প্যাকেজগুলোকে জোরপূর্বক ইনস্টল করা হচ্ছে
+    # এখানে আমরা পুরনো অ্যান্ড্রয়েড ফোল্ডারটি থাকলে তা মুছে ফ্রেশভাবে তৈরি করছি
     - name: Initialize Capacitor and Android
       run: |
         npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps
+        rm -rf android
         npx cap init Ladder com.example.ladder --web-dir=dist
         npx cap add android
 
