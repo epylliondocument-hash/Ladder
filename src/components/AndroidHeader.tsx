@@ -5,6 +5,7 @@ import { usePWAInstall } from '../hooks/usePWAInstall';
 interface AndroidHeaderProps {
   onOpenPresets: () => void;
   onPrint: () => void;
+  onOpenGuide: () => void;
   onShare?: () => void;
   styleName?: string;
 }
@@ -12,6 +13,7 @@ interface AndroidHeaderProps {
 export const AndroidHeader: React.FC<AndroidHeaderProps> = ({
   onOpenPresets,
   onPrint,
+  onOpenGuide,
   onShare,
   styleName
 }) => {
@@ -47,6 +49,17 @@ export const AndroidHeader: React.FC<AndroidHeaderProps> = ({
 
         {/* Actions Cluster */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* APK & GitHub Guide */}
+          <button
+            onClick={onOpenGuide}
+            type="button"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 active:scale-95 text-emerald-300 text-xs font-semibold border border-emerald-500/40 transition min-h-[38px]"
+            title="Android APK & GitHub Actions Guide"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">APK Guide</span>
+          </button>
+
           {/* Preset Styles Button */}
           <button
             onClick={onOpenPresets}

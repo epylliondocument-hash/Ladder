@@ -15,6 +15,7 @@ import { LaddersTab } from './components/LaddersTab';
 import { SavedStylesTab } from './components/SavedStylesTab';
 import { StylePresetModal } from './components/StylePresetModal';
 import { StylePhotoModal } from './components/StylePhotoModal';
+import { AndroidGuideModal } from './components/AndroidGuideModal';
 import { PrintReportView } from './components/PrintReportView';
 import { PWAInstallBanner, OfflineIndicator } from './components/PWAInstallBanner';
 
@@ -133,6 +134,7 @@ export default function App() {
   // Modals
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 
   // Persist inputs
   useEffect(() => {
@@ -276,6 +278,7 @@ export default function App() {
       {/* Android Top App Bar */}
       <AndroidHeader
         onOpenPresets={() => setIsPresetModalOpen(true)}
+        onOpenGuide={() => setIsGuideModalOpen(true)}
         onPrint={handlePrint}
         onShare={handleShare}
         styleName={inputs.styleName}
@@ -351,6 +354,12 @@ export default function App() {
         photoUrl={photoUrl}
         caption={photoCaption}
         onSavePhoto={handleSavePhoto}
+      />
+
+      {/* Android & GitHub Guide Modal */}
+      <AndroidGuideModal
+        isOpen={isGuideModalOpen}
+        onClose={() => setIsGuideModalOpen(false)}
       />
 
       {/* Dedicated High-Quality Print / PDF Report (Visible ONLY when printing) */}
