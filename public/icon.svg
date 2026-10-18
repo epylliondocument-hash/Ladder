@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f2b48"/>
+      <stop offset="50%" stop-color="#1b4977"/>
+      <stop offset="100%" stop-color="#0d1f35"/>
+    </linearGradient>
+    <linearGradient id="barGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0284c7" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  
+  <!-- Android Adaptive Icon Rounded Squircle Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle sewing stitch pattern top & bottom border -->
+  <path d="M48 64 h416" stroke="#38bdf8" stroke-width="4" stroke-dasharray="12,12" stroke-linecap="round" opacity="0.3"/>
+  <path d="M48 448 h416" stroke="#38bdf8" stroke-width="4" stroke-dasharray="12,12" stroke-linecap="round" opacity="0.3"/>
+
+  <!-- Productivity Ladder Bars (Ramp) -->
+  <g filter="url(#glow)">
+    <rect x="96" y="320" width="44" height="64" rx="8" fill="#38bdf8" opacity="0.8"/>
+    <rect x="156" y="270" width="44" height="114" rx="8" fill="#38bdf8" opacity="0.9"/>
+    <rect x="216" y="220" width="44" height="164" rx="8" fill="url(#barGrad)"/>
+    <rect x="276" y="176" width="44" height="208" rx="8" fill="url(#barGrad)"/>
+    <rect x="336" y="148" width="44" height="236" rx="8" fill="#22c55e"/>
+  </g>
+
+  <!-- Trend Curve Line Across Peaks -->
+  <path d="M118 316 Q 186 240 276 172 T 358 144" fill="none" stroke="#f8fafc" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="358" cy="144" r="8" fill="#f8fafc"/>
+
+  <!-- Sewing Needle & Thread Motif -->
+  <path d="M380 90 L400 70 M400 70 Q420 50 430 80 T400 130 T360 110" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- SMV Text Badge -->
+  <rect x="140" y="400" width="232" height="34" rx="17" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <text x="256" y="423" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" letter-spacing="3" text-anchor="middle">SMV PLANNER</text>
+</svg>

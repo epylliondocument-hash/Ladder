@@ -1,0 +1,6 @@
+{
+  "name": "SMV Productivity Ladder - Android Planner",
+  "description": "Mobile-first Android garment sewing line efficiency, SMV capacity ladder planner, and style order manager with live simulation and PDF exports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

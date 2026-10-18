@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  body {
+    overscroll-behavior-y: none;
+  }
+}
+
+/* Screen Mode: hide print report */
+#printReport {
+  display: none;
+}
+
+/* Print / PDF Mode */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 7mm 10mm 7mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 9pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app screen UI */
+  header, nav, #app-screen-container, .no-print {
+    display: none !important;
+  }
+
+  /* Show only the dedicated print report */
+  #printReport {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+}
+
+/* Safe Area Padding for Android Gesture Bars & Notches */
+.safe-area-pb {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
