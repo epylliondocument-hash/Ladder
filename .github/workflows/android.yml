@@ -8,19 +8,43 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 11
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
-        cache: gradle
+        cache: 'gradle'
+        # এখানে আমরা এররটি সমাধান করার জন্য অ্যান্ড্রয়েড ফোল্ডারের পাথ দেখিয়ে দিচ্ছি
+        cache-dependency-path: 'android/build.gradle' 
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+
+    - name: Install Dependencies
+      run: bun install
+
+    - name: Build Web Project
+      run: bun run build
+
+    - name: Sync with Capacitor
+      run: bunx cap sync
 
     - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      run: chmod +x android/gradlew
+
     - name: Build with Gradle
-      run: ./gradlew build
+      run: |
+        cd android
+        ./gradlew assembleDebug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
