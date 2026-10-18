@@ -23,7 +23,6 @@ jobs:
     - name: Build Web Project
       run: bun run build
 
-    # এখানে আমরা পুরনো অ্যান্ড্রয়েড ফোল্ডারটি থাকলে তা মুছে ফ্রেশভাবে তৈরি করছি
     - name: Initialize Capacitor and Android
       run: |
         npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps
@@ -31,10 +30,11 @@ jobs:
         npx cap init Ladder com.example.ladder --web-dir=dist
         npx cap add android
 
-    - name: Set up JDK 17
+    # এখানে আমরা JDK 17 পরিবর্তন করে JDK 21 করে দিয়েছি
+    - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'temurin'
 
     - name: Sync Code to Android Folder
