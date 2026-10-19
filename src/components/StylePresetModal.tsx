@@ -47,7 +47,7 @@ export const StylePresetModal: React.FC<StylePresetModalProps> = ({
           </p>
 
           {GARMENT_PRESETS.map((preset) => {
-            const isMatch = Math.abs(currentInputs.smv - preset.smv) < 0.1 && currentInputs.manpower === preset.manpower;
+            const isMatch = typeof currentInputs.smv === 'number' && Math.abs(currentInputs.smv - preset.smv) < 0.1 && currentInputs.manpower === preset.manpower;
             return (
               <div
                 key={preset.id}

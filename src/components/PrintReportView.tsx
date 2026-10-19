@@ -25,13 +25,19 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
     minute: '2-digit'
   });
 
+  const numHours = typeof hoursDay === 'number' ? hoursDay : (hoursDay ? parseFloat(hoursDay) : 10);
+  const numManpower = typeof manpower === 'number' ? manpower : (manpower ? parseInt(manpower, 10) : 0);
+  const numGap = typeof effGap === 'number' ? effGap : (effGap ? parseFloat(effGap) : 0);
+  const numQty = typeof quantity === 'number' ? quantity : (quantity ? parseInt(quantity, 10) : 0);
+
   const line1 = plan.lines[0];
-  const peakPcs = inputs.manualPcs && inputs.manualPcs > 0 && plan.lines.length
+  const manualVal = typeof inputs.manualPcs === 'number' ? inputs.manualPcs : (inputs.manualPcs ? parseFloat(inputs.manualPcs) : 0);
+  const peakPcs = manualVal > 0 && plan.lines.length
     ? Math.max(...plan.lines[0].dayPlan.map((x) => x.pcsHour))
-    : plan.target * Math.max(0, plan.band.days[7] - (effGap || 0));
+    : plan.target * Math.max(0, plan.band.days[7] - numGap);
   const peakEff = plan.target > 0 ? peakPcs / plan.target : 0;
-  const dailyTarget100 = plan.target * hoursDay;
-  const totalManHours = plan.totalHours * manpower;
+  const dailyTarget100 = plan.target * numHours;
+  const totalManHours = plan.totalHours * numManpower;
 
   return (
     <div id="printReport" className="print-only p-4 bg-white text-slate-900 font-sans">
@@ -75,9 +81,9 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         <span className="bg-sky-100 text-sky-900 border border-sky-300 rounded px-1.5 py-0.5 font-bold">
           {plan.band.band}
         </span>
-        {effGap > 0 && (
+        {numGap > 0 && (
           <span className="bg-amber-100 text-amber-900 border border-amber-300 rounded px-1.5 py-0.5 font-bold">
-            EFF Gap −{effGap}
+            EFF Gap −{numGap}
           </span>
         )}
         <span className="text-[11px] text-slate-600 ml-1">
@@ -97,7 +103,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         </div>
         <div className="p-1.5 border-r border-slate-300">
           <div className="text-[9px] uppercase font-bold text-slate-500">Quantity</div>
-          <div className="font-bold text-sm text-slate-900">{formatNum(quantity, 0)}</div>
+          <div className="font-bold text-sm text-slate-900">{formatNum(numQty, 0)}</div>
         </div>
         <div className="p-1.5 border-r border-slate-300">
           <div className="text-[9px] uppercase font-bold text-slate-500">Lead Time</div>
@@ -148,7 +154,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
         </h2>
         <div className="flex border border-slate-300 text-center text-xs">
           {plan.band.days.map((e, i) => {
-            const val = Math.max(0, e - (effGap || 0));
+            const val = Math.max(0, e - (numGap || 0));
             return (
               <div key={i} className="flex-1 py-1 border-r border-slate-300 last:border-r-0 bg-slate-50">
                 <div className="text-[9px] text-slate-500 font-bold">Day {i + 1}{i === 7 ? '+' : ''}</div>
@@ -221,7 +227,7 @@ export const PrintReportView: React.FC<PrintReportViewProps> = ({
             ))}
             <tr className="bg-sky-100 font-bold border-t-2 border-slate-800 text-slate-900">
               <td className="py-1 px-1.5 text-left">All Lines (Total)</td>
-              <td className="py-1 px-1.5">{formatNum(quantity, 0)}</td>
+              <td className="py-1 px-1.5">{formatNum(numQty, 0)}</td>
               <td className="py-1 px-1.5">{leadTime}</td>
               <td className="py-1 px-1.5">{formatNum(plan.totalHours, 2)}</td>
               <td className="py-1 px-1.5">{formatPercent(plan.avgEff)}</td>

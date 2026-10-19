@@ -9,6 +9,20 @@
   body {
     overscroll-behavior-y: none;
   }
+
+  /* Prevent browser number spinners from cluttering clean inputs */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+.safe-area-pt {
+  padding-top: max(env(safe-area-inset-top, 0px), 14px);
 }
 
 /* Screen Mode: hide print report */

@@ -1,6 +1,6 @@
-import { BandDefinition, LadderType, OrderInputs, OrderPlan, LineSimulation, DayPlanRow } from '../types/smv';
+import { BandDefinition, LadderType, LaddersData, OrderInputs, OrderPlan, LineSimulation, DayPlanRow } from '../types/smv';
 
-export const LADDERS: Record<LadderType, BandDefinition[]> = {
+export const LADDERS: LaddersData = {
   Basic: [
     { above: 0,  upTo: 8,  band: 'over 0.0 to 8.0',   days: [0.25, 0.50, 0.60, 0.70, 0.80, 0.80, 0.80, 0.80] },
     { above: 8,  upTo: 16, band: 'over 8.0 to 16.0',  days: [0.20, 0.45, 0.60, 0.70, 0.75, 0.75, 0.75, 0.75] },
@@ -39,12 +39,15 @@ export const LADDERS: Record<LadderType, BandDefinition[]> = {
   ]
 };
 
+export const DEFAULT_LADDERS: LaddersData = JSON.parse(JSON.stringify(LADDERS));
+
 export const TYPICAL_SMV = [5.65, 12, 20, 28, 36, 44, 50.5, 55.5, 60.5, 65.5];
 export const ALT_LEAD_TIMES = [24, 7, 10, 12, 14, 21, 25, 30, 40];
 export const ALT_QUANTITIES = [750, 1500, 2500, 3750, 5000, 7500, 12500, 20000, 50000];
 
-export function findBand(ladderType: LadderType, smv: number): BandDefinition {
-  const bands = LADDERS[ladderType] || LADDERS.Tight;
+export function findBand(ladderType: LadderType, smv: number, customLadders?: LaddersData): BandDefinition {
+  const activeLadders = customLadders || LADDERS;
+  const bands = activeLadders[ladderType] || activeLadders.Tight || LADDERS.Tight;
   for (const b of bands) {
     if (smv > b.above && smv <= b.upTo) return b;
   }
@@ -56,10 +59,12 @@ export function target100(manpower: number, smv: number): number {
   return (60 * manpower) / smv;
 }
 
-export function getEffectiveManualPcs(target: number, manualPcs?: number, manualEff?: number): number {
-  if (manualPcs && manualPcs > 0) return manualPcs;
-  if (manualEff && manualEff > 0 && target > 0) {
-    return (manualEff / 100) * target;
+export function getEffectiveManualPcs(target: number, manualPcs?: number | '', manualEff?: number | ''): number {
+  const p = typeof manualPcs === 'number' ? manualPcs : (manualPcs ? parseFloat(manualPcs) : 0);
+  if (p > 0) return p;
+  const e = typeof manualEff === 'number' ? manualEff : (manualEff ? parseFloat(manualEff) : 0);
+  if (e > 0 && target > 0) {
+    return (e / 100) * target;
   }
   return 0;
 }
@@ -142,7 +147,7 @@ export function simulateLine(
   };
 }
 
-export function planOrder(inputs: OrderInputs): OrderPlan {
+export function planOrder(inputs: OrderInputs, customLadders?: LaddersData): OrderPlan {
   const {
     smv,
     manpower,
@@ -156,22 +161,50 @@ export function planOrder(inputs: OrderInputs): OrderPlan {
     manualEff
   } = inputs;
 
-  const band = findBand(ladderType, smv);
-  const target = target100(manpower, smv);
+  const numSmv = typeof smv === 'number' ? smv : (smv ? parseFloat(smv) : 0);
+  const numManpower = typeof manpower === 'number' ? manpower : (manpower ? parseInt(manpower, 10) : 0);
+  const numQuantity = typeof quantity === 'number' ? quantity : (quantity ? parseInt(quantity, 10) : 0);
+  const numLeadTime = typeof leadTime === 'number' ? leadTime : (leadTime ? parseInt(leadTime, 10) : 0);
+  const numHoursDay = typeof hoursDay === 'number' ? hoursDay : (hoursDay ? parseFloat(hoursDay) : 10);
+  const numEffGap = typeof effGap === 'number' ? effGap : (effGap ? parseFloat(effGap) : 0);
+
+  const activeLadders = customLadders || LADDERS;
+  const band = findBand(ladderType, numSmv || 10, activeLadders);
+
+  // If critical numbers are missing, return clean zeroed plan
+  if (numSmv <= 0 || numManpower <= 0 || numQuantity <= 0 || numLeadTime <= 0) {
+    return {
+      band,
+      target: target100(numManpower || 0, numSmv || 1),
+      qtyPerFullLine: 0,
+      lines: [],
+      totalHours: 0,
+      avgPcsHour: 0,
+      avgEff: 0,
+      bestPcsHour: 0,
+      bestEff: 0,
+      headPcs: 0,
+      headEff: 0,
+      numLines: 0,
+      isReady: false
+    };
+  }
+
+  const target = target100(numManpower, numSmv);
   const manual = getEffectiveManualPcs(target, manualPcs, manualEff);
 
   // Full single line capacity inside leadTime
-  const fullSim = simulateLine(1e12, band, target, hoursDay, leadTime, effGap, manual);
-  const qtyPerFullLine = manual > 0 ? manual * leadTime * hoursDay : fullSim.totalOutput;
+  const fullSim = simulateLine(1e12, band, target, numHoursDay, numLeadTime, numEffGap, manual);
+  const qtyPerFullLine = manual > 0 ? manual * numLeadTime * numHoursDay : fullSim.totalOutput;
 
-  let remaining = quantity;
+  let remaining = numQuantity;
   const lines: LineSimulation[] = [];
   let lineNum = 0;
 
   while (remaining > 1e-6) {
     lineNum++;
     const take = Math.min(remaining, qtyPerFullLine);
-    const sim = simulateLine(take, band, target, hoursDay, leadTime, effGap, manual);
+    const sim = simulateLine(take, band, target, numHoursDay, numLeadTime, numEffGap, manual);
     lines.push({
       line: lineNum,
       quantity: take,
@@ -186,7 +219,7 @@ export function planOrder(inputs: OrderInputs): OrderPlan {
   }
 
   const totalHours = lines.reduce((s, l) => s + l.lineHours, 0);
-  const totalOutput = quantity;
+  const totalOutput = numQuantity;
   const avgPcsHour = manual > 0
     ? Math.round(manual * 100) / 100
     : (totalHours > 0 ? Math.floor(totalOutput / totalHours) : 0);
@@ -211,7 +244,8 @@ export function planOrder(inputs: OrderInputs): OrderPlan {
     bestEff,
     headPcs: useBest ? bestPcsHour : avgPcsHour,
     headEff: useBest ? bestEff : avgEff,
-    numLines: lines.length
+    numLines: lines.length,
+    isReady: true
   };
 }
 

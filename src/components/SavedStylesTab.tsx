@@ -48,7 +48,7 @@ export const SavedStylesTab: React.FC<SavedStylesTabProps> = ({
           <div className="min-w-0">
             <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Current in Planner:</span>
             <p className="text-white font-bold truncate">
-              {currentInputs.styleName || 'Unsaved Style'} · SMV: {currentInputs.smv}m · {formatNum(currentInputs.quantity, 0)} pcs
+              {currentInputs.styleName || 'Active Style'} · SMV: {currentInputs.smv ? `${currentInputs.smv}m` : '—'} · {currentInputs.quantity ? `${formatNum(currentInputs.quantity as number, 0)} pcs` : '—'}
             </p>
           </div>
           <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-mono shrink-0">
@@ -112,7 +112,7 @@ export const SavedStylesTab: React.FC<SavedStylesTabProps> = ({
                 </div>
                 <div>
                   <span className="text-[9px] text-slate-400 block font-sans uppercase">Quantity</span>
-                  <span className="font-bold text-white">{formatNum(item.quantity, 0)}</span>
+                  <span className="font-bold text-white">{formatNum(typeof item.quantity === 'number' ? item.quantity : (item.quantity ? parseInt(item.quantity, 10) : 0), 0)}</span>
                 </div>
                 <div>
                   <span className="text-[9px] text-slate-400 block font-sans uppercase">Lead Time</span>

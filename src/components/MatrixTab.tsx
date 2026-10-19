@@ -1,18 +1,26 @@
 import React, { useState } from 'react';
-import { OrderInputs } from '../types/smv';
+import { OrderInputs, LaddersData } from '../types/smv';
 import { LADDERS, TYPICAL_SMV, target100, planOrder, formatNum, formatPercent } from '../utils/smvEngine';
-import { Grid, Eye, CheckCircle2 } from 'lucide-react';
+import { Grid } from 'lucide-react';
 
 interface MatrixTabProps {
   inputs: OrderInputs;
+  customLadders?: LaddersData;
 }
 
 type MatrixMode = 'eff' | 'pcs' | 'lines';
 
-export const MatrixTab: React.FC<MatrixTabProps> = ({ inputs }) => {
+export const MatrixTab: React.FC<MatrixTabProps> = ({ inputs, customLadders }) => {
   const [mode, setMode] = useState<MatrixMode>('eff');
   const leadTimes = [40, 30, 25, 21, 14, 12, 10, 7];
-  const bands = LADDERS[inputs.ladderType];
+
+  const activeLadders = customLadders || LADDERS;
+  const bands = activeLadders[inputs.ladderType] || activeLadders.Tight;
+
+  const numManpower = typeof inputs.manpower === 'number' ? inputs.manpower : (inputs.manpower ? parseInt(inputs.manpower, 10) : 40);
+  const numQuantity = typeof inputs.quantity === 'number' ? inputs.quantity : (inputs.quantity ? parseInt(inputs.quantity, 10) : 25000);
+  const numSmv = typeof inputs.smv === 'number' ? inputs.smv : (inputs.smv ? parseFloat(inputs.smv) : 0);
+  const numLeadTime = typeof inputs.leadTime === 'number' ? inputs.leadTime : (inputs.leadTime ? parseInt(inputs.leadTime, 10) : 14);
 
   return (
     <div className="space-y-4 pb-20 animate-in fade-in duration-200">
@@ -25,7 +33,7 @@ export const MatrixTab: React.FC<MatrixTabProps> = ({ inputs }) => {
               Lead Time × SMV Range Matrix
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Simulates {inputs.ladderType} ladder at {inputs.manpower} operators & {formatNum(inputs.quantity, 0)} pcs
+              Simulates {inputs.ladderType} ladder at {numManpower} operators & {formatNum(numQuantity, 0)} pcs
             </p>
           </div>
 
@@ -85,7 +93,7 @@ export const MatrixTab: React.FC<MatrixTabProps> = ({ inputs }) => {
                   <th
                     key={lt}
                     className={`py-2.5 px-2 text-right ${
-                      lt === inputs.leadTime ? 'text-blue-400 font-bold bg-blue-950/40' : ''
+                      lt === numLeadTime ? 'text-blue-400 font-bold bg-blue-950/40' : ''
                     }`}
                   >
                     {lt}d
@@ -96,8 +104,8 @@ export const MatrixTab: React.FC<MatrixTabProps> = ({ inputs }) => {
             <tbody className="divide-y divide-slate-800/60 font-mono">
               {bands.map((band, idx) => {
                 const smvUsed = TYPICAL_SMV[idx];
-                const target = target100(inputs.manpower, smvUsed);
-                const isCurrentBand = inputs.smv > band.above && inputs.smv <= band.upTo;
+                const target = target100(numManpower, smvUsed);
+                const isCurrentBand = numSmv > band.above && numSmv <= band.upTo;
 
                 return (
                   <tr
@@ -118,9 +126,11 @@ export const MatrixTab: React.FC<MatrixTabProps> = ({ inputs }) => {
                       const p = planOrder({
                         ...inputs,
                         smv: smvUsed,
+                        manpower: numManpower,
+                        quantity: numQuantity,
                         leadTime: lt,
-                      });
-                      const isColActive = lt === inputs.leadTime;
+                      }, customLadders);
+                      const isColActive = lt === numLeadTime;
 
                       let cellContent = '';
                       if (mode === 'eff') cellContent = formatPercent(p.headEff);

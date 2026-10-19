@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { OrderInputs, SavedStyle, LadderType } from './types/smv';
-import { planOrder, GarmentPreset, GARMENT_PRESETS } from './utils/smvEngine';
+import { OrderInputs, SavedStyle, LadderType, LaddersData } from './types/smv';
+import { planOrder, GarmentPreset, GARMENT_PRESETS, DEFAULT_LADDERS } from './utils/smvEngine';
 import { AndroidHeader } from './components/AndroidHeader';
 import { AndroidBottomNav, ActiveTab } from './components/AndroidBottomNav';
 import { PlannerTab } from './components/PlannerTab';
@@ -16,32 +16,34 @@ import { SavedStylesTab } from './components/SavedStylesTab';
 import { StylePresetModal } from './components/StylePresetModal';
 import { StylePhotoModal } from './components/StylePhotoModal';
 import { AndroidGuideModal } from './components/AndroidGuideModal';
+import { PDFExportModal } from './components/PDFExportModal';
 import { PrintReportView } from './components/PrintReportView';
 import { PWAInstallBanner, OfflineIndicator } from './components/PWAInstallBanner';
 
-const STORAGE_INPUTS_KEY = 'smvPlanner.inputs.v2';
-const STORAGE_PHOTO_KEY = 'smvPlanner.photo.v2';
-const STORAGE_CAPTION_KEY = 'smvPlanner.caption.v2';
-const STORAGE_SAVED_STYLES_KEY = 'smvPlanner.savedStyles.v2';
+const STORAGE_INPUTS_KEY = 'smvPlanner.inputs.v4';
+const STORAGE_PHOTO_KEY = 'smvPlanner.photo.v4';
+const STORAGE_CAPTION_KEY = 'smvPlanner.caption.v4';
+const STORAGE_SAVED_STYLES_KEY = 'smvPlanner.savedStyles.v4';
+const STORAGE_LADDERS_KEY = 'smvPlanner.customLadders.v2';
 
 const DEFAULT_INPUTS: OrderInputs = {
-  smv: 66.5,
-  manpower: 70,
-  quantity: 50000,
-  leadTime: 24,
-  hoursDay: 10,
+  smv: '',
+  manpower: '',
+  quantity: '',
+  leadTime: '',
+  hoursDay: '',
   ladderType: 'Tight',
-  effGap: 0,
+  effGap: '',
   avgBasis: 'best',
-  manualPcs: undefined,
-  manualEff: undefined,
-  styleName: 'Heavy Padded Winter Jacket',
-  buyerName: 'Global Apparel Co.',
-  poNumber: 'PO-2026-8841',
+  manualPcs: '',
+  manualEff: '',
+  styleName: '',
+  buyerName: '',
+  poNumber: '',
 };
 
 export default function App() {
-  // Inputs state
+  // Inputs state - Starts completely empty by default as requested!
   const [inputs, setInputs] = useState<OrderInputs>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_INPUTS_KEY);
@@ -50,6 +52,17 @@ export default function App() {
       // ignore
     }
     return DEFAULT_INPUTS;
+  });
+
+  // Custom Editable Ladders state (persisted)
+  const [customLadders, setCustomLadders] = useState<LaddersData>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_LADDERS_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      // ignore
+    }
+    return DEFAULT_LADDERS;
   });
 
   // Photo & Caption state
@@ -63,9 +76,9 @@ export default function App() {
 
   const [photoCaption, setPhotoCaption] = useState<string>(() => {
     try {
-      return localStorage.getItem(STORAGE_CAPTION_KEY) || 'Heavy Quilted Parka · Tight Ladder';
+      return localStorage.getItem(STORAGE_CAPTION_KEY) || '';
     } catch (e) {
-      return 'Heavy Quilted Parka · Tight Ladder';
+      return '';
     }
   });
 
@@ -77,54 +90,7 @@ export default function App() {
     } catch (e) {
       // ignore
     }
-    // Initial pre-loaded industry styles
-    return [
-      {
-        id: 'sample-1',
-        name: 'Heavy Padded Winter Jacket',
-        buyer: 'The North Trail',
-        poNumber: 'PO-44120',
-        smv: 66.5,
-        manpower: 70,
-        quantity: 50000,
-        leadTime: 24,
-        hoursDay: 10,
-        ladderType: 'Tight',
-        effGap: 0,
-        photoCaption: 'Style #JK-660 · Multi Pocket Hooded',
-        createdAt: Date.now() - 86400000 * 2,
-      },
-      {
-        id: 'sample-2',
-        name: 'Classic Pique Polo 2-Button',
-        buyer: 'Ralph & Co.',
-        poNumber: 'PO-39011',
-        smv: 18.5,
-        manpower: 45,
-        quantity: 20000,
-        leadTime: 21,
-        hoursDay: 10,
-        ladderType: 'Basic',
-        effGap: 0,
-        photoCaption: 'Style #PL-20 · Ribbed Collar & Cuffs',
-        createdAt: Date.now() - 86400000 * 5,
-      },
-      {
-        id: 'sample-3',
-        name: 'Standard Crewneck Tee 100% Cotton',
-        buyer: 'Basics Apparel',
-        poNumber: 'PO-12093',
-        smv: 8.5,
-        manpower: 36,
-        quantity: 35000,
-        leadTime: 14,
-        hoursDay: 10,
-        ladderType: 'Basic',
-        effGap: 0,
-        photoCaption: 'Style #TS-01 · 180 GSM Single Jersey',
-        createdAt: Date.now() - 86400000 * 10,
-      }
-    ];
+    return [];
   });
 
   // Active navigation tab
@@ -135,6 +101,7 @@ export default function App() {
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
 
   // Persist inputs
   useEffect(() => {
@@ -165,11 +132,36 @@ export default function App() {
     } catch (e) {}
   }, [savedStyles]);
 
-  // Calculate live plan
-  const plan = useMemo(() => planOrder(inputs), [inputs]);
+  // Calculate live plan using inputs and custom ladders
+  const plan = useMemo(() => planOrder(inputs, customLadders), [inputs, customLadders]);
 
   const handleUpdateInputs = (updated: Partial<OrderInputs>) => {
     setInputs((prev) => ({ ...prev, ...updated }));
+  };
+
+  const handleClearInputs = () => {
+    setInputs(DEFAULT_INPUTS);
+    setPhotoUrl(null);
+    setPhotoCaption('');
+    try {
+      localStorage.removeItem(STORAGE_INPUTS_KEY);
+      localStorage.removeItem(STORAGE_PHOTO_KEY);
+      localStorage.removeItem(STORAGE_CAPTION_KEY);
+    } catch (e) {}
+  };
+
+  const handleUpdateLadders = (updated: LaddersData) => {
+    setCustomLadders(updated);
+    try {
+      localStorage.setItem(STORAGE_LADDERS_KEY, JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  const handleResetLadders = () => {
+    setCustomLadders(DEFAULT_LADDERS);
+    try {
+      localStorage.removeItem(STORAGE_LADDERS_KEY);
+    } catch (e) {}
   };
 
   const handleSelectPreset = (preset: GarmentPreset) => {
@@ -182,9 +174,9 @@ export default function App() {
       hoursDay: preset.hoursDay,
       ladderType: preset.ladderType,
       quantity: preset.defaultQty,
-      effGap: 0,
-      manualPcs: undefined,
-      manualEff: undefined,
+      effGap: '',
+      manualPcs: '',
+      manualEff: '',
     }));
     setPhotoCaption(`${preset.name} · ${preset.category}`);
   };
@@ -197,7 +189,7 @@ export default function App() {
   const handleSaveCurrentStyle = () => {
     const newStyle: SavedStyle = {
       id: `style-${Date.now()}`,
-      name: inputs.styleName || `Style SMV ${inputs.smv}`,
+      name: inputs.styleName || `Style SMV ${inputs.smv || 'Custom'}`,
       buyer: inputs.buyerName,
       poNumber: inputs.poNumber,
       smv: inputs.smv,
@@ -228,8 +220,8 @@ export default function App() {
       hoursDay: style.hoursDay,
       ladderType: style.ladderType,
       effGap: style.effGap,
-      manualPcs: undefined,
-      manualEff: undefined,
+      manualPcs: '',
+      manualEff: '',
     }));
 
     if (style.photoUrl) setPhotoUrl(style.photoUrl);
@@ -244,7 +236,7 @@ export default function App() {
 
   const handlePrint = () => {
     const prevTitle = document.title;
-    document.title = `SMV_Plan_${inputs.styleName ? inputs.styleName.replace(/[^a-zA-Z0-9]/g, '_') : 'Garment'}_${inputs.smv}m_${inputs.quantity}pcs_${inputs.leadTime}d`;
+    document.title = `SMV_Plan_${inputs.styleName ? inputs.styleName.replace(/[^a-zA-Z0-9]/g, '_') : 'Garment'}_${inputs.smv || 0}m_${inputs.quantity || 0}pcs_${inputs.leadTime || 0}d`;
     window.print();
     setTimeout(() => {
       document.title = prevTitle;
@@ -256,7 +248,7 @@ export default function App() {
       try {
         await navigator.share({
           title: `SMV Plan - ${inputs.styleName || 'Garment Order'}`,
-          text: `Garment Capacity Plan: SMV ${inputs.smv}m, ${inputs.manpower} ops, ${plan.numLines} lines for ${inputs.quantity} pcs (${inputs.leadTime} days). Target 100%: ${Math.round(plan.target)} pcs/hr.`,
+          text: `Garment Capacity Plan: SMV ${inputs.smv || '—'}m, ${inputs.manpower || '—'} ops, ${plan.numLines} lines for ${inputs.quantity || '—'} pcs (${inputs.leadTime || '—'} days). Target 100%: ${Math.round(plan.target)} pcs/hr.`,
           url: window.location.href,
         });
       } catch (err) {
@@ -278,8 +270,8 @@ export default function App() {
       {/* Android Top App Bar */}
       <AndroidHeader
         onOpenPresets={() => setIsPresetModalOpen(true)}
+        onOpenPDF={() => setIsPDFModalOpen(true)}
         onOpenGuide={() => setIsGuideModalOpen(true)}
-        onPrint={handlePrint}
         onShare={handleShare}
         styleName={inputs.styleName}
       />
@@ -293,11 +285,13 @@ export default function App() {
           <PlannerTab
             inputs={inputs}
             onChangeInputs={handleUpdateInputs}
+            onClearInputs={handleClearInputs}
             plan={plan}
             photoUrl={photoUrl}
             photoCaption={photoCaption}
             onOpenPhotoModal={() => setIsPhotoModalOpen(true)}
             onSelectLineForRamp={handleSelectLineForRamp}
+            onOpenPDF={() => setIsPDFModalOpen(true)}
           />
         )}
 
@@ -310,7 +304,7 @@ export default function App() {
         )}
 
         {activeTab === 'matrix' && (
-          <MatrixTab inputs={inputs} />
+          <MatrixTab inputs={inputs} customLadders={customLadders} />
         )}
 
         {activeTab === 'ladders' && (
@@ -318,6 +312,9 @@ export default function App() {
             currentLadder={inputs.ladderType}
             currentSmv={inputs.smv}
             onSelectLadder={(ladder: LadderType) => handleUpdateInputs({ ladderType: ladder })}
+            customLadders={customLadders}
+            onUpdateLadders={handleUpdateLadders}
+            onResetLadders={handleResetLadders}
           />
         )}
 
@@ -360,6 +357,17 @@ export default function App() {
       <AndroidGuideModal
         isOpen={isGuideModalOpen}
         onClose={() => setIsGuideModalOpen(false)}
+      />
+
+      {/* PDF Export & Share Modal */}
+      <PDFExportModal
+        isOpen={isPDFModalOpen}
+        onClose={() => setIsPDFModalOpen(false)}
+        onPrint={handlePrint}
+        plan={plan}
+        inputs={inputs}
+        photoUrl={photoUrl}
+        photoCaption={photoCaption}
       />
 
       {/* Dedicated High-Quality Print / PDF Report (Visible ONLY when printing) */}

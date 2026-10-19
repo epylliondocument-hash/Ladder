@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { OrderPlan, OrderInputs } from '../types/smv';
 import { formatNum, formatPercent } from '../utils/smvEngine';
-import { TrendingUp, Award, Layers } from 'lucide-react';
+import { TrendingUp, Layers, AlertCircle } from 'lucide-react';
 
 interface DayRampTabProps {
   plan: OrderPlan;
@@ -16,10 +16,23 @@ export const DayRampTab: React.FC<DayRampTabProps> = ({
 }) => {
   const [activeLineNum, setActiveLineNum] = useState<number>(selectedLine);
 
+  if (!plan.isReady || plan.lines.length === 0) {
+    return (
+      <div className="space-y-4 pb-20 animate-in fade-in duration-200">
+        <div className="bg-slate-800/70 border border-dashed border-slate-700 rounded-2xl p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+            <TrendingUp className="w-6 h-6 text-blue-400" />
+          </div>
+          <h3 className="font-bold text-white text-base">No Production Plan Yet</h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            Please enter your <strong>SMV, Manpower, Quantity, and Lead Time</strong> in the <strong>Planner</strong> tab to calculate the sequential line ramp.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const activeLine = plan.lines.find((l) => l.line === activeLineNum) || plan.lines[0];
-  const maxDayPcs = activeLine
-    ? Math.max(...activeLine.dayPlan.map((d) => d.pcsHour * inputs.hoursDay), 1)
-    : 100;
 
   return (
     <div className="space-y-4 pb-20 animate-in fade-in duration-200">
